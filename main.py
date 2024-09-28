@@ -8,6 +8,8 @@ import pandas as pd
 import numpy as np
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+
 
 def importi_in_float(list_importi):
     importi_float = []
@@ -73,22 +75,37 @@ matrice_nuova = np.hstack((date, uscite_float, entrate_float, tipo_transazione, 
 # Sostituiamo i NaN con zero
 
 df_movimenti = pd.DataFrame(matrice_nuova,columns=['Data','Uscita','Entrata','Transazione', 'ID Transazione'])
-
 df_movimenti['Data'] = pd.to_datetime(df_movimenti['Data'])
-
 df_movimenti['Mese'] = df_movimenti['Data'].dt.month
+df_movimenti['Anno'] = df_movimenti['Data'].dt.year
+df_movimenti['MeseAnno'] = df_movimenti['Data'].dt.to_period('M')
+
+month_year_vector = list(set(df_movimenti['MeseAnno'].astype(str).tolist()))
+month_year_vector.sort()
 
 
 # Raggruppa per mese e calcola la media
-grouped = df_movimenti.groupby(df_movimenti['Mese'])['Uscita'].sum()
-grouped1 = df_movimenti.groupby(df_movimenti['Mese'])['Entrata'].sum()
+grouped = df_movimenti.groupby(pd.Grouper(key='Data', freq='ME'))['Uscita'].sum()
+grouped1 = df_movimenti.groupby(pd.Grouper(key='Data', freq='ME'))['Entrata'].sum()
+grouped = np.abs(grouped)
 
 print(grouped)
-print(grouped1)
+print(pd.Grouper(key='Data', freq='ME'))
 
-grouped.plot(kind='bar')
-grouped1.plot(kind='bar')
-plt.xlabel('Mese')
+x = np.arange(len(grouped))
+
+width = 0.35
+fig, ax = plt.subplots()
+bar1 = ax.bar(x - width/2, grouped, width, label='Uscite')
+bar2 = ax.bar(x + width/2, grouped1, width, label='Entrate')
+
+# Plotting the data
+# Adding labels and title
+ax.set_xlabel('Mese')
+ax.set_title('Multiple Bar Plot')
+ax.set_xticks(x, labels=month_year_vector)
+
+ax.legend()
 plt.show()
 
 
